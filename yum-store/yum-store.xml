@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<yum-stores catchdir="temp">
+	<store key="zju.edu.cn">http://mirrors.zju.edu.cn/centos/7/os/x86_64</store>
+	<store key="neusoft.edu.cn">http://mirrors.neusoft.edu.cn/centos/7/os/x86_64</store>
+</yum-stores>

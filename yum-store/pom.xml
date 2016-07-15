@@ -20,6 +20,12 @@
 	    <groupId>org.redline-rpm</groupId>
 	    <artifactId>redline</artifactId>
 	    <version>1.1.12</version>
+	    <exclusions>
+			<exclusion>
+				<groupId>org.apache.ant</groupId>
+  				<artifactId>*</artifactId>
+			</exclusion>
+		</exclusions>
 	</dependency>
 
 	<dependency>
@@ -66,11 +72,17 @@
          <version>${org.slf4j-version}</version>  
       </dependency>
 	
-	<dependency>
-	    <groupId>commons-io</groupId>
-	    <artifactId>commons-io</artifactId>
-	    <version>2.4</version>
-	</dependency>
+	  <dependency>
+	     <groupId>commons-io</groupId>
+	     <artifactId>commons-io</artifactId>
+	     <version>2.4</version>
+	   </dependency>
+	   
+	   <dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.5.2</version>
+		</dependency>
 	
   </dependencies>
   

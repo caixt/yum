@@ -7,4 +7,11 @@ public class Entry {
 	public String version;
 	public String release;
 	public String pre;
+	@Override
+	public String toString() {
+		return "Entry [name=" + name + ", flags=" + flags + ", epoch=" + epoch
+				+ ", version=" + version + ", release=" + release + ", pre="
+				+ pre + "]";
+	}
+	
 }
