@@ -18,7 +18,7 @@ import com.github.cat.yum.store.YumStore;
 public class HttpUtils {
 	private static Logger log = LoggerFactory.getLogger(YumStore.class);
 
-	public static boolean dowloadFile(String baseUrl, String file, File target) {
+	public static void dowloadFile(String baseUrl, String file, File target) throws ClientProtocolException, IOException {
 		String url = baseUrl;
 		if(baseUrl.endsWith("/")){
 			url += file;
@@ -32,18 +32,11 @@ public class HttpUtils {
 		HttpClient client = HttpClients.createDefault();
         HttpGet httpget = new HttpGet(url);  
         httpget.setHeader("Connection", "close");
-		try {
-			HttpResponse response = client.execute(httpget);
-			HttpEntity entity = response.getEntity();  
-	        InputStream is = entity.getContent();  
-	        FileUtils.copyInputStreamToFile(is, target);
-	        return true;
-		} catch (ClientProtocolException e) {
-			log.error("", e);
-		} catch (IOException e) {
-			log.error("", e);
-		}  
-		return false;
+        
+		HttpResponse response = client.execute(httpget);
+		HttpEntity entity = response.getEntity();  
+        InputStream is = entity.getContent();  
+        FileUtils.copyInputStreamToFile(is, target);
 	}
 
 }

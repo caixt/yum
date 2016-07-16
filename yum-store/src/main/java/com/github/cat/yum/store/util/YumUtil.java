@@ -352,6 +352,9 @@ public class YumUtil {
         	if(null != entry.release){
         		entryElement.setAttribute("rel", entry.release);
         	}
+        	if(null != entry.pre){
+        		entryElement.setAttribute("pre", entry.pre);
+        	}
         	parent.addContent(entryElement);
         }
 	}
