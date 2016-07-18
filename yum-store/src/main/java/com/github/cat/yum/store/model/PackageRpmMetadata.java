@@ -5,11 +5,15 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Element;
+
+import com.github.cat.yum.store.filter.PrivateRequireFilter;
+import com.github.cat.yum.store.filter.YumFileter;
+
 import static com.github.cat.yum.store.util.YumUtil.COMMONNAMESPACE;
 import static com.github.cat.yum.store.util.YumUtil.RPMNAMESPACE;
 
 public class PackageRpmMetadata extends RpmMetadata {
-	
+
 	public String algorithm;
 	
 	public String checkSum;
@@ -33,17 +37,30 @@ public class PackageRpmMetadata extends RpmMetadata {
 		else{
 			this.require = new ArrayList<>();
 		}
+		this.files = new ArrayList<File>();
+		List<Element> files = format.getChildren("file", COMMONNAMESPACE);
+		for(Element fileElement : files){
+			File file = new File();
+			file.path = fileElement.getTextTrim();
+			String type = fileElement.getAttributeValue("type");
+			if(!StringUtils.isBlank(type)){
+				file.type = type;
+			}
+			this.files.add(file);
+		}
 	}
 	
 	
 	private List<Entry> initEntry(List<Element> entryElements){
+		YumFileter filter = new PrivateRequireFilter();
 		List<Entry> entrys = new ArrayList<>();
 		for(Element entryElement : entryElements){
-			Entry entry = new Entry();
-			entry.name = entryElement.getAttributeValue("name");
-			if(name.startsWith("rpmlib(")){
+			String name = entryElement.getAttributeValue("name");
+			if(filter.filter(name)){
 				continue;
 			}
+			Entry entry = new Entry();
+			entry.name = name;
 			String flags = entryElement.getAttributeValue("flags");
 			if(!StringUtils.isBlank(flags)){
 				entry.flags = flags;

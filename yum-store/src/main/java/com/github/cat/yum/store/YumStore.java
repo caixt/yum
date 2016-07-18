@@ -114,6 +114,19 @@ public class YumStore {
 					 datas.add(rpmMetadata);
 					 map.put(entry.name, datas);
 				}
+				
+				for(com.github.cat.yum.store.model.File file : rpmMetadata.files){
+					//file 类型
+					if(StringUtils.isBlank(file.type)){
+						List<PackageRpmMetadata> datas = map.get(file.path);
+						
+						if(null == datas){
+							 datas = new ArrayList<>();
+						}
+						datas.add(rpmMetadata);
+						map.put(file.path, datas);
+					}
+				}
 			}
 		}
 		return map;

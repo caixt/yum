@@ -5,7 +5,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.Namespace;
@@ -16,6 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.cat.yum.store.RpmScan;
+import com.github.cat.yum.store.filter.PrivateFileDirFilter;
+import com.github.cat.yum.store.filter.PrivateFileFilter;
+import com.github.cat.yum.store.filter.PrivateRequireFilter;
+import com.github.cat.yum.store.filter.YumFileter;
 import com.github.cat.yum.store.model.ChangeLog;
 import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.RepoModule;
@@ -202,7 +208,7 @@ public class YumUtil {
 	        packAge.addContent(url);
 	        
 	        Element time =  new Element("time", COMMONNAMESPACE);
-	        time.setAttribute("file", rpmdata.rpm.lastModified()%1000 + "");
+	        time.setAttribute("file", rpmdata.rpm.lastModified()/1000 + "");
 	        time.setAttribute("build", rpmMetadata.buildTime + "");
 	        packAge.addContent(time);
 	        
@@ -246,19 +252,41 @@ public class YumUtil {
 	        
 	        Element provides =  new Element("provides", RPMNAMESPACE);
 	        format.addContent(provides);
-	        addEntry(provides, rpmMetadata.provide);
+	        addEntry(provides, rpmMetadata.provide, null);
 	        
 	        Element requires =  new Element("requires", RPMNAMESPACE);
 	        format.addContent(requires);
-	        addEntry(requires, rpmMetadata.require);
+	        addEntry(requires, rpmMetadata.require, new PrivateRequireFilter());
 	
 	        Element conflicts =  new Element("conflicts", RPMNAMESPACE);
 	        format.addContent(conflicts);
-	        addEntry(conflicts, rpmMetadata.conflict);
+	        addEntry(conflicts, rpmMetadata.conflict, null);
 	        
 	        Element obsoletes =  new Element("obsoletes", RPMNAMESPACE);
 	        format.addContent(obsoletes);
-	        addEntry(obsoletes, rpmMetadata.obsolete);
+	        addEntry(obsoletes, rpmMetadata.obsolete, null);
+	        
+	        YumFileter fileflter = new PrivateFileFilter();
+	        YumFileter fileDirflter = new PrivateFileDirFilter();
+	        for(com.github.cat.yum.store.model.File file : rpmMetadata.files){
+	        	if(StringUtils.isBlank(file.type)){
+	        		if(fileflter.filter(file.path)){
+	        			continue;
+	        		}
+	        	}
+	        	else if("dir".equals(file.type)){
+	        		if(fileDirflter.filter(file.path)){
+	        			continue;
+	        		}
+	        	}
+	        	
+	        	Element fileElemenrt =  new Element("file", COMMONNAMESPACE);
+	        	fileElemenrt.setText(file.path);
+	        	if(!StringUtils.isBlank(file.type)){
+	        		fileElemenrt.setAttribute("type", file.type);
+	        	}
+	 	        format.addContent(fileElemenrt);
+	        }
         }
         yumXmlSave(doc, repo);
         return repo;
@@ -336,10 +364,14 @@ public class YumUtil {
 	}
 	
 	
-	private static void addEntry(Element parent, List<Entry> entrys){
+	private static void addEntry(Element parent, List<Entry> entrys, YumFileter filter){
         for(Entry entry : entrys){
         	Element entryElement =  new Element("entry", RPMNAMESPACE);
-        	entryElement.setAttribute("name", entry.name);
+        	String name = entry.name;
+        	if(null != filter && filter.filter(name)){
+        		continue;
+        	}
+        	entryElement.setAttribute("name", name);
         	if(null != entry.flags){
         		entryElement.setAttribute("flags", entry.flags);
         	}
