@@ -105,7 +105,7 @@ public class YumStore {
 			
 			List<Element> packages = root.getChildren("package", YumUtil.COMMONNAMESPACE);
 			for(Element packageElement : packages){
-				PackageRpmMetadata rpmMetadata = new PackageRpmMetadata(packageElement);
+				PackageRpmMetadata rpmMetadata = new PackageRpmMetadata(packageElement, store);
 				for(Entry entry : rpmMetadata.provide){
 					 List<PackageRpmMetadata> datas = map.get(entry.name);
 					 if(null == datas){

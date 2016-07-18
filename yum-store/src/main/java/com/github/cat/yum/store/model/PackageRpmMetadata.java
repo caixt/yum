@@ -2,13 +2,10 @@ package com.github.cat.yum.store.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Element;
-
 import com.github.cat.yum.store.filter.PrivateRequireFilter;
 import com.github.cat.yum.store.filter.YumFileter;
-
 import static com.github.cat.yum.store.util.YumUtil.COMMONNAMESPACE;
 import static com.github.cat.yum.store.util.YumUtil.RPMNAMESPACE;
 
@@ -20,7 +17,10 @@ public class PackageRpmMetadata extends RpmMetadata {
 	
 	public String location;
 	
-	public PackageRpmMetadata(Element packageElement){
+	public Store store;
+	
+	public PackageRpmMetadata(Element packageElement, Store store){
+		this.store = store;
 		name = packageElement.getChild("name", COMMONNAMESPACE).getText();
 		Element checksum = packageElement.getChild("checksum", COMMONNAMESPACE);
 		this.algorithm = checksum.getAttributeValue("type");

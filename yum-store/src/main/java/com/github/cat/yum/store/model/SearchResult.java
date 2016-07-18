@@ -20,6 +20,9 @@ public class SearchResult {
 		if(rpms.contains(rpm)){
 			return new ArrayList<>();
 		}
+		if(rpm.location.equals("Packages/glibc-2.17-105.el7.i686.rpm")){
+			System.out.println("!");
+		}
 		rpms.add(rpm);
 		provides.addAll(rpm.provide);
 		for(Entry require : rpm.require){
