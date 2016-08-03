@@ -164,7 +164,7 @@ public abstract class GZipUtils {
 	 */
 	public static void decompress(File file, boolean delete) throws IOException {
 		FileInputStream fis = new FileInputStream(file);
-		FileOutputStream fos = new FileOutputStream(file.getPath().replace(EXT, 	""));
+		FileOutputStream fos = new FileOutputStream(file.getPath().replace(EXT, ""));
 		decompress(fis, fos);
 		fis.close();
 		fos.flush();

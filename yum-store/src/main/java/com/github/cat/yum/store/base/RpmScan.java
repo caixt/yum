@@ -1,4 +1,4 @@
-package com.github.cat.yum.store;
+package com.github.cat.yum.store.base;
 
 import java.io.File;
 import java.io.FileInputStream;

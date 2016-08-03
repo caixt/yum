@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Document;
@@ -14,10 +13,8 @@ import org.jdom2.Namespace;
 import org.jdom2.output.Format;
 import org.jdom2.output.LineSeparator;
 import org.jdom2.output.XMLOutputter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.github.cat.yum.store.RpmScan;
+import com.github.cat.yum.store.base.RpmScan;
 import com.github.cat.yum.store.filter.PrivateFileDirFilter;
 import com.github.cat.yum.store.filter.PrivateFileFilter;
 import com.github.cat.yum.store.filter.PrivateRequireFilter;
@@ -28,7 +25,6 @@ import com.github.cat.yum.store.model.RepoModule;
 import com.github.cat.yum.store.model.RpmMetadata;
 
 public class YumUtil {
-	private static Logger log = LoggerFactory.getLogger(YumUtil.class);
 	
 	public static String REPOPATH = "repodata";
 	
@@ -41,40 +37,23 @@ public class YumUtil {
 	public static Namespace OTHERNAMESPACE = Namespace.getNamespace("", "http://linux.duke.edu/metadata/other");
 	
 	
-	public static boolean createRepoData(File dir) {
-		try{
-			if(!dir.exists() || !dir.isDirectory()){
-				throw new IllegalArgumentException(dir + " is not directory or not exists");
-			}
-			String rootPath = dir.getAbsolutePath();
-			File repoDataDir = new File(rootPath + File.separator + REPOPATH);
-			if(repoDataDir.exists()){
-				FileUtils.deleteDirectory(repoDataDir);
-			}
-			FileUtils.forceMkdir(repoDataDir);
-			File[] rpms =  FileUtils.listFiles(dir, new String[]{"rpm"}, true).toArray(new File[]{});
-			
-			RpmData[] rpmDatas = new RpmData[rpms.length];
-		    for(int i = 0; i < rpms.length; i++){
-		    	File rpm = rpms[i];
-	        	RpmScan rpmScan = new RpmScan(rpm);
-	    		RpmMetadata rpmMetadata = rpmScan.getRpmMetadata();
-	    		rpmDatas[i] = new RpmData(rpm, rpmMetadata);
-		     }
-			
-			RepoModule repoFilelists = createFilelitsts(rpmDatas, rootPath);
-			RepoModule repoPrimary = createPrimary(rpmDatas, rootPath);
-			RepoModule repoOther = createOther(rpmDatas, rootPath);
-			
-			createRepoMd(rootPath, repoOther, repoFilelists, repoPrimary);
-		} catch (NoSuchAlgorithmException ignore) {
-			log.error("", ignore);
-			return false;
-		} catch (IOException e) {
-			log.error("", e);
-			return false;
-		}
-		return true;
+	public static void createRepoData(File dir) throws IOException, NoSuchAlgorithmException {
+		String rootPath = dir.getAbsolutePath();
+		File[] rpms =  FileUtils.listFiles(dir, new String[]{"rpm"}, true).toArray(new File[]{});
+		
+		RpmData[] rpmDatas = new RpmData[rpms.length];
+	    for(int i = 0; i < rpms.length; i++){
+	    	File rpm = rpms[i];
+        	RpmScan rpmScan = new RpmScan(rpm);
+    		RpmMetadata rpmMetadata = rpmScan.getRpmMetadata();
+    		rpmDatas[i] = new RpmData(rpm, rpmMetadata);
+	     }
+		
+		RepoModule repoFilelists = createFilelitsts(rpmDatas, rootPath);
+		RepoModule repoPrimary = createPrimary(rpmDatas, rootPath);
+		RepoModule repoOther = createOther(rpmDatas, rootPath);
+		
+		createRepoMd(rootPath, repoOther, repoFilelists, repoPrimary);
 	}
 	
 	private static void createRepoMd(String rootPath, RepoModule ...repos) throws IOException{

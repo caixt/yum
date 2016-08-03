@@ -1,4 +1,4 @@
-package com.github.cat.yum.store;
+package com.github.cat.yum.store.base;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.ClientProtocolException;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -50,13 +50,15 @@ public class YumStore {
 			store.key = element.getAttributeValue("key").trim();
 			store.baseUrl = element.getTextTrim();
 			if(keys.contains(store.key) || StringUtils.isBlank(store.key)){
-				throw new IllegalArgumentException("store key must unique and not null");
+				throw new YumException("store key must unique and not null");
 			}
 			stores.add(store);
         }
 	}
 	
-	
+	/**
+	 * 初始化文件(包含下载repomd.xml,private.xml)
+	 */
 	public void initFile(){
 		for(Store store : stores){
 			File dir = new File(cachedir.getPath() + File.separator + store.key);
@@ -66,9 +68,10 @@ public class YumStore {
 			File repomdXml = new File(dir.getPath() + File.separator + "repomd" + ".xml");
 			if(!repomdXml.exists()){
 				try{
+					log.info("download file " + store.baseUrl + YumUtil.REPOPATH + "/" + "repomd" + ".xml");
 					HttpUtils.dowloadFile(store.baseUrl, YumUtil.REPOPATH + "/" + "repomd" + ".xml", repomdXml);
-				}catch(Exception e){
-					log.warn("", e);
+				}catch(IOException e){
+					log.warn("download file " + store.baseUrl + YumUtil.REPOPATH + "/" + "repomd" + ".xml error", e);
 				}
 			}
 			if(!repomdXml.exists()){
@@ -83,16 +86,20 @@ public class YumStore {
 						log.info("store " + store.key + " disable");
 						continue;
 					}
-				}catch(Exception e){
+				}catch(RuntimeException e){
 					log.info("store " + store.key + " disable");
 					continue;
 				}
 			}
 			store.enable = true;
-			log.info("store " + repomdXml + " enable");
+			log.info("store " + store.key + " enable");
 		}
 	}
 	
+	/**
+	 * 分析private.xml文件
+	 * @return
+	 */
 	public Map<String, List<PackageRpmMetadata>> initStore(){
 		Map<String, List<PackageRpmMetadata>> map = new HashMap<>();
 		for(Store store : stores){
@@ -131,43 +138,70 @@ public class YumStore {
 		}
 		return map;
 	}
-
-	public File getCachedir() {
-		return cachedir;
-	}
-
-	public void setCachedir(File cachedir) {
-		this.cachedir = cachedir;
-	}
-
-	public List<Store> getStores() {
-		return stores;
-	}
-
-	public void setStores(List<Store> stores) {
-		this.stores = stores;
+	
+	public void clean() throws IOException {
+		FileUtils.deleteDirectory(cachedir);
+		
 	}
 	
-	private File downloadPrivateXml(Store store, File dir, File repomdXml) throws ClientProtocolException, IOException, NoSuchAlgorithmException, IllegalAccessException{
+	public File getTarget(Store store, String file){
+		return new File(cachedir.getPath() + File.separator + store.key + File.separator + file);
+	}
+	
+	
+	public void download(Store store, String file, File target, String algorithm, String checkSum){
+		try{
+			if(target.exists() && StringUtils.equals(HashFile.getsum(target, algorithm), checkSum)){
+				log.info("file:" + file + " exist");
+				return ;
+			}
+			log.info("download file:" + file + " from " + store.baseUrl);
+			HttpUtils.dowloadFile(store.baseUrl, file, target);
+			if(StringUtils.equals(HashFile.getsum(target, algorithm), checkSum)){
+				log.info("download file:" + file + " success");
+				return ;
+			}
+			throw new YumException("file:" + file + " checkSum fail");
+		}catch(NoSuchAlgorithmException | IOException e){
+			throw new YumException("file:" + file + " download fail", e);
+		}
+	}
+	
+	private File downloadPrivateXml(Store store, File dir, File repomdXml) {
 		Element privateElement = getPrivateXmlPath(repomdXml);
 		String href = privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim();
 		File privateTepmXml = new File(dir.getPath() + File.separator + getFileNameFormHref(href));
-		HttpUtils.dowloadFile(store.baseUrl, privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim(), privateTepmXml);
-
-	
-		Element  check = privateElement.getChild("checksum", YumUtil.REPONAMESPACE);
-		String sum = HashFile.getsum(privateTepmXml, getAlgorithm(check.getAttributeValue("type")));
-		if(!sum.equals(check.getValue())){
-			throw new IllegalAccessException("download file and checked fail");
+		try {
+			HttpUtils.dowloadFile(store.baseUrl, privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim(), privateTepmXml);
+		} catch (IOException e) {
+			throw new YumException("download private.xml fail form " + store.baseUrl, e);
 		}
-		GZipUtils.decompress(privateTepmXml);
+		Element  check = privateElement.getChild("checksum", YumUtil.REPONAMESPACE);
+		String sum;
+		try {
+			sum = HashFile.getsum(privateTepmXml, check.getAttributeValue("type"));
+		} catch (NoSuchAlgorithmException | IOException e) {
+			throw new YumException("check " + privateTepmXml + " error", e);
+		}
+		if(!sum.equals(check.getValue())){
+			throw new YumException("download file and checked fail");
+		}
+		try {
+			GZipUtils.decompress(privateTepmXml);
+		} catch (IOException e) {
+			throw new YumException("decompress " + privateTepmXml + "", e);
+		}
 		privateTepmXml = new File(dir.getPath() + File.separator + privateTepmXml.getName().substring(0, privateTepmXml.getName().indexOf(".gz")));
 		privateTepmXml.renameTo(new File(dir.getPath() + File.separator + "private" + ".xml"));
 		privateTepmXml = new File(dir.getPath() + File.separator + "private" + ".xml");
 		check = privateElement.getChild("open-checksum", YumUtil.REPONAMESPACE);
-		sum = HashFile.getsum(privateTepmXml, getAlgorithm(check.getAttributeValue("type")));
+		try {
+			sum = HashFile.getsum(privateTepmXml, check.getAttributeValue("type"));
+		} catch (NoSuchAlgorithmException | IOException e) {
+			throw new YumException("check " + privateTepmXml + " error", e);
+		}
 		if(!sum.equals(check.getValue())){
-			throw new IllegalAccessException("download file and checked fail");
+			throw new YumException("download file and checked fail");
 		}
 		return privateTepmXml;
 		
@@ -175,23 +209,15 @@ public class YumStore {
 	
 	
 	private Element getPrivateXmlPath(File repomdXml) {
-		SAXBuilder saxBuilder = new SAXBuilder();            
-		try {
-			Document doc = saxBuilder.build(repomdXml);
-			Element root = doc.getRootElement();
-			
-	        for(Element element : root.getChildren("data", YumUtil.REPONAMESPACE)){
-	        	String type = element.getAttributeValue("type");
-				if("primary".equals(type)){
-					return element;
-				}
-	        }
-		} catch (JDOMException e) {
-			log.error("", e);
-		} catch (IOException e) {
-			log.error("", e);
-		}
-		return null;
+		Element root = getXmlRoot(repomdXml);
+		
+        for(Element element : root.getChildren("data", YumUtil.REPONAMESPACE)){
+        	String type = element.getAttributeValue("type");
+			if("primary".equals(type)){
+				return element;
+			}
+        }
+		throw new YumException("not find <data type=\"primary\"></data> from" + repomdXml);
 	}
 	
 	
@@ -203,34 +229,15 @@ public class YumStore {
 	}
 	
 	
-	private String getAlgorithm(String algorithm){
-		switch (algorithm) {
-			case "SHA224":
-			case "sha224":
-				return "SHA-224";
-			case "SHA256":
-			case "sha256":
-				return "SHA-256";
-			case "SHA384":
-			case "sha384":
-				return "SHA-384";
-			case "SHA512":
-			case "sha512":
-				return "SHA-512";
-			default:
-				return algorithm;
-		}
-	}
-	
-	public Element getXmlRoot(File xml){
+	private Element getXmlRoot(File xml){
 		SAXBuilder saxBuilder = new SAXBuilder();            
-		Document doc;
 		try {
-			doc = saxBuilder.build(xml);
+			Document doc = saxBuilder.build(xml);
 			Element root = doc.getRootElement();
 			return root;
-		} catch (Exception e) {
-			throw new RuntimeException("xml read failed", e);
+		} catch (JDOMException | IOException e) {
+			throw new YumException("xml read failed", e);
 		}
 	}
+
 }

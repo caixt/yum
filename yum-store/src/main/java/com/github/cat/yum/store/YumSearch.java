@@ -6,13 +6,19 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.github.cat.yum.store.base.YumException;
+import com.github.cat.yum.store.base.YumStore;
 import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.PackageRpmMetadata;
 import com.github.cat.yum.store.model.SearchResult;
 import com.github.cat.yum.store.util.VersionStringUtils;
 
 public class YumSearch {
+	private static Logger log = LoggerFactory.getLogger(YumSearch.class);
+	
 	public static void search(File storeXml, String... rpmName) {
 		YumStore yumStore = new YumStore(storeXml);
 		yumStore.initFile();
@@ -25,11 +31,15 @@ public class YumSearch {
 		}
 		SearchResult result = new SearchResult();
 		search(serarch, map, result);
+		log.info("search success.");
 		for(PackageRpmMetadata rpm : result.rpms){
-			System.out.println(rpm.name);
+			File target = yumStore.getTarget(rpm.store, rpm.location);
+			try{
+				yumStore.download(rpm.store, rpm.location, target, rpm.algorithm, rpm.checkSum);
+			}catch(YumException e){
+				throw new YumException("download file " + rpm.store.baseUrl + "/" + rpm.location + " error", e);
+			}
 		}
-		
-		
 	}
 	
 	private static void search(List<Entry> serarchs, Map<String, List<PackageRpmMetadata>> map, SearchResult result){

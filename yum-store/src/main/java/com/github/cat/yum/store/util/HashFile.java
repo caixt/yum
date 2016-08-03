@@ -11,7 +11,7 @@ public class HashFile {
 	
     public static String getsum(File file, String algorithm) throws NoSuchAlgorithmException, IOException
     {
-        MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
+        MessageDigest messageDigest = MessageDigest.getInstance(formateAlgorithm(algorithm));
         FileInputStream fis = new FileInputStream(file);
   
         byte[] data = new byte[1024];
@@ -31,4 +31,24 @@ public class HashFile {
         fis.close();
         return fileHash;
     }
+    
+    
+	private static String formateAlgorithm(String algorithm){
+		switch (algorithm) {
+			case "SHA224":
+			case "sha224":
+				return "SHA-224";
+			case "SHA256":
+			case "sha256":
+				return "SHA-256";
+			case "SHA384":
+			case "sha384":
+				return "SHA-384";
+			case "SHA512":
+			case "sha512":
+				return "SHA-512";
+			default:
+				return algorithm;
+		}
+	}
 }
