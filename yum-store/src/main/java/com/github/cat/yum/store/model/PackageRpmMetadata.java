@@ -17,10 +17,8 @@ public class PackageRpmMetadata extends RpmMetadata {
 	
 	public String location;
 	
-	public Store store;
 	
-	public PackageRpmMetadata(Element packageElement, Store store){
-		this.store = store;
+	public PackageRpmMetadata(Element packageElement){
 		name = packageElement.getChild("name", COMMONNAMESPACE).getText();
 		Element checksum = packageElement.getChild("checksum", COMMONNAMESPACE);
 		this.algorithm = checksum.getAttributeValue("type");

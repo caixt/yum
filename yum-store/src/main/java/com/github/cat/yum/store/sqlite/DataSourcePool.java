@@ -3,9 +3,14 @@ package com.github.cat.yum.store.sqlite;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
 import org.apache.commons.dbcp.BasicDataSource;
 
 public class DataSourcePool {
+	
+	public static String dbFilePath = "yum-store.sqlite";
 	
 	private BasicDataSource ds = null;
 	
@@ -14,7 +19,7 @@ public class DataSourcePool {
 	private DataSourcePool(){
 		ds = new BasicDataSource();
 		ds.setDriverClassName("org.sqlite.JDBC");
-		ds.setUrl("jdbc:sqlite:yum-store.sqlite");
+		ds.setUrl("jdbc:sqlite:" + dbFilePath);
 		ds.setInitialSize(3);
 		ds.setMaxActive(10);
 		ds.setMaxIdle(10);
@@ -26,6 +31,10 @@ public class DataSourcePool {
 			return new DataSourcePool();
 		}
 		return dataSourcePool;
+	}
+	
+	public DataSource getDataSource() {
+		return ds;
 	}
 	
 	public Connection getConnection() throws SQLException{

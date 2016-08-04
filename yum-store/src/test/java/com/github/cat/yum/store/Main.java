@@ -2,11 +2,15 @@ package com.github.cat.yum.store;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.regex.Pattern;
+
 import org.junit.Test;
+
 import com.github.cat.yum.store.base.RpmScan;
 import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.RpmMetadata;
+import com.github.cat.yum.store.sqlite.SqlUtils;
 import com.github.cat.yum.store.util.VersionStringUtils;
 
 
@@ -36,8 +40,9 @@ public class Main {
 	}
 	
 	@Test
-	public void yumclean() {
+	public void yumclean() throws SQLException {
 		YumCleanCache.clean(new File("yum-store.xml"));
+		SqlUtils.inintTables();
 	}
 	
 	

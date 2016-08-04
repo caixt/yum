@@ -13,5 +13,41 @@ public class Entry {
 				+ ", version=" + version + ", release=" + release + ", pre="
 				+ pre + "]";
 	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getFlags() {
+		return flags;
+	}
+	public void setFlags(String flags) {
+		this.flags = flags;
+	}
+	public String getEpoch() {
+		return epoch;
+	}
+	public void setEpoch(String epoch) {
+		this.epoch = epoch;
+	}
+	public String getVersion() {
+		return version;
+	}
+	public void setVersion(String version) {
+		this.version = version;
+	}
+	public String getRelease() {
+		return release;
+	}
+	public void setRelease(String release) {
+		this.release = release;
+	}
+	public String getPre() {
+		return pre;
+	}
+	public void setPre(String pre) {
+		this.pre = pre;
+	}
 	
 }
