@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +28,7 @@ import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.PackageRpmMetadata;
 import com.github.cat.yum.store.model.SearchResult;
 import com.github.cat.yum.store.model.Store;
+import com.github.cat.yum.store.sqlite.DataSourcePool;
 import com.github.cat.yum.store.sqlite.SqlUtils;
 import com.github.cat.yum.store.util.GZipUtils;
 import com.github.cat.yum.store.util.HashFile;
@@ -36,7 +39,7 @@ import com.github.cat.yum.store.util.YumUtil;
 public class YumStore {
 	private static Logger log = LoggerFactory.getLogger(YumStore.class);
 	
-	private File cachedir = null;
+	public static File cachedir = null;
 	private List<Store> stores;
 	
 
@@ -63,27 +66,21 @@ public class YumStore {
         }
 	}
 	
+	
+	
 
 	public void init(){
+		initSQL();
+		
+		List<Object> enableKeys = new ArrayList<>();
 		for(Store store : stores){
-			Store dbStore = SqlUtils.selectList("select * from store where key=?", new BeanHandler<Store>(Store.class), store.key);
-			if(dbStore != null && dbStore.baseUrl.equals(store.baseUrl)){
+			Store dbStore = SqlUtils.select("select * from store where key=?", new BeanHandler<Store>(Store.class), store.key);
+			if(dbStore != null){
+				store.enable = true;
+				enableKeys.add(store.key);
 				log.info("load store [" + store.key + "] from cache");  
-				return ;
+				continue ;
 			}
-			else if(dbStore != null && !dbStore.baseUrl.equals(store.baseUrl)){
-				log.info("delete store [" + store.key + "] cache");
-				SqlUtils.selectList("delete store where key=?", new BeanHandler<Store>(Store.class), store.key);
-				File dir = new File(cachedir.getPath() + File.separator + store.key);
-				if(dir.exists()){
-					try {
-						FileUtils.deleteDirectory(dir);
-					} catch (IOException e) {
-						throw new YumException("delete file:" + dir + "error", e);
-					}
-				}
-			}
-			
 			
 			File dir = new File(cachedir.getPath() + File.separator + store.key);
 			if(!dir.exists()){
@@ -93,11 +90,9 @@ public class YumStore {
 			
 			if(!repomdXml.exists()){
 				try{
-					log.info("download file " + store.baseUrl + "/" + YumUtil.REPOPATH + "/" + "repomd" + ".xml");
 					HttpUtils.dowloadFile(store.baseUrl, YumUtil.REPOPATH + "/" + "repomd" + ".xml", repomdXml);
-					log.info("download file " + store.baseUrl + "/" + YumUtil.REPOPATH + "/" + "repomd" + ".xml success");
 				}catch(IOException e){
-					log.warn("download file " + store.baseUrl + "/" + YumUtil.REPOPATH + "/" + "repomd" + ".xml error", e);
+					log.warn("[skip] download file " + store.baseUrl + "/" + YumUtil.REPOPATH + "/" + "repomd" + ".xml fail " + e.getMessage());
 				}
 			}
 			if(!repomdXml.exists()){
@@ -118,8 +113,13 @@ public class YumStore {
 				}
 			}
 			store.enable = true;
+			enableKeys.add(store.key);
 			loadProvateXmlData(store, privateXml);
 			log.info("store " + store.key + " enable");
+		}
+		
+		if(enableKeys.size() == 0){
+			throw new YumException("no store enable");
 		}
 	}
 	
@@ -177,7 +177,7 @@ public class YumStore {
 			try {
 				conn.rollback();
 			} catch (SQLException e1) {
-				throw new YumException("db rollback error", e);
+				throw new YumException("db rollback error", e1);
 			}
 			throw new YumException("load private xml data fail", e);
 		}finally{
@@ -193,12 +193,15 @@ public class YumStore {
 	
 	public void clean() throws IOException {
 		FileUtils.deleteDirectory(cachedir);
-		
+		File dbFile = new File(DataSourcePool.getDbFilePath());
+		if(dbFile.exists() && !dbFile.delete()){
+			throw new IOException("file:" + dbFile + " delete fail");
+		}
 	}
 	
 	
 	private File downloadRpm(String packagekey, Map<String, Store> stores){
-		Map<String, Object> rpm = SqlUtils.selectList("select * from package where key=?", new MapHandler(), packagekey);
+		Map<String, Object> rpm = SqlUtils.select("select * from package where key=?", new MapHandler(), packagekey);
 		Store store = stores.get(rpm.get("storekey"));
 		String location = (String)rpm.get("location");
 		File target = new File(cachedir.getPath() + File.separator + store.key + File.separator + location);
@@ -209,15 +212,13 @@ public class YumStore {
 				log.info("file:" + target + " exist");
 				return target;
 			}
-			log.info("download file:" + store.baseUrl + "/" + location);
 			HttpUtils.dowloadFile(store.baseUrl, location, target);
 			if(StringUtils.equals(HashFile.getsum(target, algorithm), checkSum)){
-				log.info("download file:" + location + " success");
 				return target;
 			}
 			throw new YumException("file:" + target + " checkSum fail");
 		}catch(NoSuchAlgorithmException | IOException e){
-			throw new YumException("file:" + target + " download fail", e);
+			throw new YumException("download " + location + " fail " + e.getMessage());
 		}
 	}
 	
@@ -295,7 +296,7 @@ public class YumStore {
 	}
 	
 	
-	public SearchResult searchAndDownload(List<Entry> serarchs){
+	public SearchResult searchAndDownload(Entry serarch){
 		Map<String, Store> storeMap = new HashMap<>();
 		for(Store store : stores){
 			if(store.enable){
@@ -303,7 +304,9 @@ public class YumStore {
 			}
 		}
 		SearchResult result = new SearchResult();
-		searchAndDownload(serarchs, result, storeMap);
+		List<Entry> searchs = new ArrayList<Entry>();
+		searchs.add(serarch);
+		searchAndDownload(searchs, result, storeMap);
 		return result;
 	}
 	
@@ -320,6 +323,12 @@ public class YumStore {
 			//provides 中查找
 			List<Map<String, Object>> datas = SqlUtils.selectList("select * from provides where name=?", new MapListHandler(), search.name);
 			
+			Collections.sort(datas, new Comparator<Map<String, Object>>() {
+	            public int compare(Map<String, Object> e1, Map<String, Object> e2) {
+	                return -VersionStringUtils.compare((String) e1.get("version"), (String)e2.get("version"));
+	            }
+	        });
+			
 			for(Map<String, Object> data : datas){
 				if(verificationEntry(search, (String) data.get("version"))){
 					try{
@@ -329,7 +338,7 @@ public class YumStore {
 						success = true;
 						break;
 					}catch(YumException e){
-						log.warn(e.getMessage() + " skip...", e);
+						log.warn("[skip]" + e.getMessage());
 					}
 				}
 				
@@ -347,7 +356,7 @@ public class YumStore {
 						success = true;
 						break;
 					}catch(YumException e){
-						log.warn(e.getMessage() + " skip...", e);
+						log.warn("[skip]" + e.getMessage());
 					}
 				}
 			}
@@ -359,6 +368,31 @@ public class YumStore {
 		}
 		if(nextSearch.size() > 0){
 			searchAndDownload(nextSearch, result, stores);
+		}
+	}
+	
+	private void initSQL(){
+		int count = (int) SqlUtils.select("select count(*) icount from sqlite_master", new MapHandler()).get("icount");
+		if(count == 0){
+			SqlUtils.inintTables();
+		}
+		else {
+			//值域变化,需要重新初始化
+			count = (int) SqlUtils.select("select count(*) icount from store", new MapHandler()).get("icount");
+			if(count != stores.size()){
+				log.info("db cache clean");
+				SqlUtils.inintTables();
+			}
+			else{
+				for(Store store : stores){
+					Store dbStore = SqlUtils.select("select * from store where key=?", new BeanHandler<Store>(Store.class), store.key);
+					if(dbStore == null || !dbStore.baseUrl.equals(store.baseUrl)){
+						log.info("db cache clean");
+						SqlUtils.inintTables();
+						return ;
+					}
+				}
+			}
 		}
 	}
 	

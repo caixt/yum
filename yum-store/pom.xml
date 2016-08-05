@@ -102,7 +102,11 @@
 		    <version>1.6</version>
 		</dependency>
 
-	
+		<dependency>
+		    <groupId>org.zeroturnaround</groupId>
+		    <artifactId>zt-zip</artifactId>
+		    <version>1.7</version>
+		</dependency>
   </dependencies>
   
   

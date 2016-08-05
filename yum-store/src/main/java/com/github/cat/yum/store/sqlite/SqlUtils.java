@@ -18,7 +18,6 @@ public class SqlUtils {
 	
 	private static DataSourcePool pool = DataSourcePool.getInstance();
 	
-	
 	public static Connection getConnection(){
 		Connection conn;
 		try {
@@ -29,25 +28,50 @@ public class SqlUtils {
 		}
 	}
 	
-	public static void inintTables() throws SQLException{
-		Connection conn = pool.getConnection();
-		conn.setAutoCommit(false);
-		String[] sqls = new String[]{
+	public static void inintTables(){
+		Connection conn = null;
+		try{
+			conn = pool.getConnection();
+			conn.setAutoCommit(false);
+			String[] sqls = new String[]{
+				"DROP TABLE IF EXISTS store;",
+				"DROP TABLE IF EXISTS package;",
+				"DROP TABLE IF EXISTS provides;",
+				"DROP TABLE IF EXISTS requires;",
+				"DROP TABLE IF EXISTS files;",
+					
 				"CREATE TABLE store (key PRIMARY KEY, baseUrl);",
 				"CREATE TABLE package (key PRIMARY KEY, storekey, name, algorithm, checkSum, location);",
 				"CREATE TABLE provides (packagekey, name,  flags,  epoch,  version,  release);",
 				"CREATE TABLE requires (packagekey, name,  flags,  epoch,  version,  release);",
-				"CREATE TABLE files (packagekey, path, type)"
-		};
+				"CREATE TABLE files (packagekey, path, type)",
+				
+		        "CREATE INDEX packages_key_index ON package (key);",
+		        "CREATE INDEX provides_name_index on provides (name);",
+		        "CREATE INDEX requires_name_index on requires (name);",
+		        "CREATE INDEX files_path_index on files (path);"
+			};
 		
-		try{
 			for(String sql : sqls){
 				update(conn, sql);
 			}
-		}finally{
 			conn.commit();
-			conn.setAutoCommit(true);
-			conn.close();
+		}catch(SQLException e){
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				throw new YumException("db rollback error", e1);
+			}
+			throw new YumException("create table error", e);
+		}finally{
+			try{
+				if(conn != null){
+					conn.setAutoCommit(true);
+					conn.close();
+				}
+			}catch (SQLException ignore) {
+				
+			}
 		}
 		
 //		stat.executeUpdate("CREATE store (key PRIMARY KEY, baseUrl);");	
@@ -84,7 +108,7 @@ public class SqlUtils {
 		}
 	}
 	
-	public static <T> T selectList(String sql, BeanHandler<T> handler, Object ...params) {
+	public static <T> T select(String sql, BeanHandler<T> handler, Object ...params) {
 		try{
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
@@ -93,7 +117,7 @@ public class SqlUtils {
 		}
 	}
 	
-	public static Map<String, Object> selectList(String sql, MapHandler handler, Object ...params) {
+	public static Map<String, Object> select(String sql, MapHandler handler, Object ...params) {
 		try{
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
@@ -102,19 +126,31 @@ public class SqlUtils {
 		}
 	}
 	
-	public static int update(String sql, Object ...params) throws SQLException{
-		QueryRunner qr = new QueryRunner(pool.getDataSource());
-		return qr.update(sql, params);
+	public static int update(String sql, Object ...params){
+		try{
+			QueryRunner qr = new QueryRunner(pool.getDataSource());
+			return qr.update(sql, params);
+		}catch(SQLException e){
+			throw new YumException(sql + " error", e);
+		}
 	}
 	
-	public static int update(Connection conn, String sql, Object ...params) throws SQLException{
-		QueryRunner qr = new QueryRunner();
-		return qr.update(conn, sql, params);
+	public static int update(Connection conn, String sql, Object ...params){
+		try{
+			QueryRunner qr = new QueryRunner();
+			return qr.update(conn, sql, params);
+		}catch(SQLException e){
+			throw new YumException(sql + " error", e);
+		}
 	}
 	
-	public static int[] batch(Connection conn, String sql, Object[][] params) throws SQLException{
-		QueryRunner qr = new QueryRunner();
-		return qr.batch(conn, sql, params);
+	public static int[] batch(Connection conn, String sql, Object[][] params){
+		try{
+			QueryRunner qr = new QueryRunner();
+			return qr.batch(conn, sql, params);
+		}catch(SQLException e){
+			throw new YumException(sql + " error", e);
+		}
 	}
 	
 	public static String getUUId(){
