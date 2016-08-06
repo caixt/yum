@@ -17,11 +17,18 @@ import com.github.cat.yum.store.util.VersionStringUtils;
 public class Main {
 	
 	@Test
-	public void createRepoData () {
-		File file = new File("yum-store");//+ File.separator + "centos" + File.separator + "7" + File.separator + "os" + File.separator + "x86_64");
-		file = file.getAbsoluteFile();
-		YumCreateStore store = new YumCreateStore(file);
-		store.initRepodata();
+	public void testSearch(){
+		Launcher.main(new String[]{"search","-a", "x86-64", "-v", "6.0", "unzip"});
+	}
+	
+	@Test
+	public void testCleanCache(){
+		Launcher.main(new String[]{"cleanCache", "-c", "conf/yum-store.xml"});
+	}
+	
+	@Test
+	public void testCreateRepo () {
+		Launcher.main(new String[]{"createRepo", "yum-store"});
 	}
 	
 	@Test
@@ -35,8 +42,8 @@ public class Main {
 	
 	
 	@Test
-	public void yumsearch()  {
-		YumSearch.search(new File("conf/yum-store.xml"), "unzip","6.0","x86-64");
+	public void yumsearch() {
+		YumSearch.search(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
 	}
 	
 	@Test

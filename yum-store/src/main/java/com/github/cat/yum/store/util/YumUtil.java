@@ -381,7 +381,9 @@ public class YumUtil {
 			new XMLOutputter(formate).output(doc, fileOutputStream);
 		}finally{
 			try{
-				fileOutputStream.close();
+				if(null != fileOutputStream){
+					fileOutputStream.close();
+				}
 			}catch(IOException ignore){
 				
 			}

@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <yum-stores catchdir="cache">
-	<store key="zju.edu1">http://amirrors.zju.edu.cn/centos/7/os/x86_64</store>
-	<store key="neusoft.edu5">http://amirrors.neusoft.edu.cn/centos/7/os/x86_64</store>
+	<store key="zju.edu">http://mirrors.zju.edu.cn/centos/7/os/x86_64</store>
+	<store key="neusoft.edu">http://amirrors.neusoft.edu.cn/centos/7/os/x86_64</store> 
+	<filter>bash</filter>
 </yum-stores>

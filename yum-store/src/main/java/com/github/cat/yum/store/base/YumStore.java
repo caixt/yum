@@ -17,6 +17,7 @@ import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -41,6 +42,7 @@ public class YumStore {
 	
 	public static File cachedir = null;
 	private List<Store> stores;
+	private String[] fileterRpmNames;
 	
 
 	public YumStore(File xml){
@@ -64,6 +66,12 @@ public class YumStore {
 			}
 			stores.add(store);
         }
+        List<String> filters = new ArrayList<>();
+        elements = root.getChildren("filter");
+        for(Element element : elements){
+        	filters.add(element.getTextTrim());
+        }
+        fileterRpmNames = filters.toArray(new String[]{});
 	}
 	
 	
@@ -92,7 +100,7 @@ public class YumStore {
 				try{
 					HttpUtils.dowloadFile(store.baseUrl, YumUtil.REPOPATH + "/" + "repomd" + ".xml", repomdXml);
 				}catch(IOException e){
-					log.warn("[skip] download file " + store.baseUrl + "/" + YumUtil.REPOPATH + "/" + "repomd" + ".xml fail " + e.getMessage());
+					log.warn("[skip] download fail " + e.getMessage());
 				}
 			}
 			if(!repomdXml.exists()){
@@ -104,11 +112,13 @@ public class YumStore {
 				try{
 					privateXml = downloadPrivateXml(store, dir, repomdXml);
 					if(!privateXml.exists()){
+						log.warn("private.xml not exists");
 						log.info("store " + store.key + " disable");
 						continue;
 					}
 				}catch(RuntimeException e){
-					log.info("store " + store.key + " disable");
+					log.warn(e.getMessage());
+					log.info("store " + store.key + " disable ");
 					continue;
 				}
 			}
@@ -200,8 +210,15 @@ public class YumStore {
 	}
 	
 	
-	private File downloadRpm(String packagekey, Map<String, Store> stores){
+	private List<Entry> downloadRpmAddResult(String packagekey, Map<String, Store> stores, SearchResult result){
 		Map<String, Object> rpm = SqlUtils.select("select * from package where key=?", new MapHandler(), packagekey);
+		String name = (String)rpm.get("name");
+		if(ArrayUtils.indexOf(fileterRpmNames, name) > -1){
+			log.info("skip rpm :" + name);
+			return result.addRpm(packagekey, null);
+		}
+		
+		
 		Store store = stores.get(rpm.get("storekey"));
 		String location = (String)rpm.get("location");
 		File target = new File(cachedir.getPath() + File.separator + store.key + File.separator + location);
@@ -210,11 +227,11 @@ public class YumStore {
 		try{
 			if(target.exists() && StringUtils.equals(HashFile.getsum(target, algorithm), checkSum)){
 				log.info("file:" + target + " exist");
-				return target;
+				return result.addRpm(packagekey, target);
 			}
 			HttpUtils.dowloadFile(store.baseUrl, location, target);
 			if(StringUtils.equals(HashFile.getsum(target, algorithm), checkSum)){
-				return target;
+				return result.addRpm(packagekey, target);
 			}
 			throw new YumException("file:" + target + " checkSum fail");
 		}catch(NoSuchAlgorithmException | IOException e){
@@ -333,8 +350,7 @@ public class YumStore {
 				if(verificationEntry(search, (String) data.get("version"))){
 					try{
 						String packagekey = (String)data.get("packagekey");
-						File rpm = downloadRpm(packagekey, stores);
-						nextSearch.addAll(result.addRpm(packagekey, rpm));
+						nextSearch.addAll(downloadRpmAddResult(packagekey, stores, result));
 						success = true;
 						break;
 					}catch(YumException e){
@@ -351,8 +367,7 @@ public class YumStore {
 				for(Map<String, Object> data : datas){
 					try{
 						String packagekey = (String)data.get("packagekey");
-						File rpm = downloadRpm(packagekey, stores);
-						nextSearch.addAll(result.addRpm(packagekey, rpm));
+						nextSearch.addAll(downloadRpmAddResult(packagekey, stores, result));
 						success = true;
 						break;
 					}catch(YumException e){
