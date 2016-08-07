@@ -18,7 +18,8 @@ public class Main {
 	
 	@Test
 	public void testSearch(){
-		Launcher.main(new String[]{"search","-a", "x86-64", "-v", "6.0", "unzip"});
+		Launcher.main(new String[]{"search", "unzip"});
+		//Launcher.main(new String[]{"search","-a", "x86-64", "-v", "6.0", "unzip"});
 	}
 	
 	@Test
@@ -27,8 +28,13 @@ public class Main {
 	}
 	
 	@Test
-	public void testCreateRepo () {
+	public void testCreateRepo() {
 		Launcher.main(new String[]{"createRepo", "yum-store"});
+	}
+	
+	@Test
+	public void testHelp() {
+		Launcher.main(new String[]{"createRepo", "-help"});
 	}
 	
 	@Test

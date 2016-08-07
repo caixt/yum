@@ -24,7 +24,7 @@ public class SqlUtils {
 			conn = pool.getConnection();
 			return conn;
 		} catch (SQLException e) {
-			throw new YumException("get Connection error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -60,9 +60,9 @@ public class SqlUtils {
 			try {
 				conn.rollback();
 			} catch (SQLException e1) {
-				throw new YumException("db rollback error", e1);
+				throw new YumException(e1);
 			}
-			throw new YumException("create table error", e);
+			throw new YumException(e);
 		}finally{
 			try{
 				if(conn != null){
@@ -95,7 +95,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -104,7 +104,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -113,7 +113,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -122,7 +122,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.query(sql, handler, params); 
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -131,7 +131,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner(pool.getDataSource());
 			return qr.update(sql, params);
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -140,7 +140,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner();
 			return qr.update(conn, sql, params);
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	
@@ -149,7 +149,7 @@ public class SqlUtils {
 			QueryRunner qr = new QueryRunner();
 			return qr.batch(conn, sql, params);
 		}catch(SQLException e){
-			throw new YumException(sql + " error", e);
+			throw new YumException(e);
 		}
 	}
 	

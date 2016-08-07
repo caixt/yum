@@ -74,7 +74,7 @@ public class YumSearch {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp("search rpmName", options, true);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " search [options] rpmName", options);
 	}
 	
 	

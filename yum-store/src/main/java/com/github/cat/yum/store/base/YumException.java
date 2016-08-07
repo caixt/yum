@@ -16,8 +16,8 @@ public class YumException extends RuntimeException{
     }
 
 
-    public YumException(String message, Throwable cause) {
-        super(message, cause);
-    }
+//    public YumException(String message, Throwable cause) {
+//        super(message, cause);
+//    }
 
 }

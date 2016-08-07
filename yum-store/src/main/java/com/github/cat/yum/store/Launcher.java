@@ -6,7 +6,9 @@ import org.apache.commons.cli.Options;
 
 public class Launcher {
 	
-	public static Option HELP_OPTION = new Option("h", "help", false, "print help message");
+	public static Option HELP_OPTION = new Option("help", false, "print help message");
+	
+	public static String CALLCOMMAND = System.getProperty("CALL_COMMAND", "");
 	
 	
 	public static void main(String[] args) {
@@ -41,8 +43,8 @@ public class Launcher {
 	
 	private static void printHelp(Options options){
         HelpFormatter formatter = new HelpFormatter();
-		formatter.setSyntaxPrefix("Commands:");
+		formatter.setSyntaxPrefix(CALLCOMMAND + " command");
 	    formatter.setLongOptPrefix("");
-        formatter.printHelp(" ", options);
+	    formatter.printHelp(" ", options);
 	}
 }

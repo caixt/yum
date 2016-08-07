@@ -187,9 +187,9 @@ public class YumStore {
 			try {
 				conn.rollback();
 			} catch (SQLException e1) {
-				throw new YumException("db rollback error", e1);
+				throw new YumException(e1);
 			}
-			throw new YumException("load private xml data fail", e);
+			throw new YumException(e);
 		}finally{
 			try{
 				conn.setAutoCommit(true);
@@ -246,14 +246,14 @@ public class YumStore {
 		try {
 			HttpUtils.dowloadFile(store.baseUrl, privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim(), privateTepmXml);
 		} catch (IOException e) {
-			throw new YumException("download private.xml fail form " + store.baseUrl, e);
+			throw new YumException(e);
 		}
 		Element  check = privateElement.getChild("checksum", YumUtil.REPONAMESPACE);
 		String sum;
 		try {
 			sum = HashFile.getsum(privateTepmXml, check.getAttributeValue("type"));
 		} catch (NoSuchAlgorithmException | IOException e) {
-			throw new YumException("check " + privateTepmXml + " error", e);
+			throw new YumException(e);
 		}
 		if(!sum.equals(check.getValue())){
 			throw new YumException("download file and checked fail");
@@ -261,7 +261,7 @@ public class YumStore {
 		try {
 			GZipUtils.decompress(privateTepmXml);
 		} catch (IOException e) {
-			throw new YumException("decompress " + privateTepmXml + "", e);
+			throw new YumException(e);
 		}
 		privateTepmXml = new File(dir.getPath() + File.separator + privateTepmXml.getName().substring(0, privateTepmXml.getName().indexOf(".gz")));
 		privateTepmXml.renameTo(new File(dir.getPath() + File.separator + "private" + ".xml"));
@@ -270,10 +270,10 @@ public class YumStore {
 		try {
 			sum = HashFile.getsum(privateTepmXml, check.getAttributeValue("type"));
 		} catch (NoSuchAlgorithmException | IOException e) {
-			throw new YumException("check " + privateTepmXml + " error", e);
+			throw new YumException(e);
 		}
 		if(!sum.equals(check.getValue())){
-			throw new YumException("download file and checked fail");
+			throw new YumException("download " + privateTepmXml + " and checked fail");
 		}
 		return privateTepmXml;
 		
@@ -308,7 +308,7 @@ public class YumStore {
 			Element root = doc.getRootElement();
 			return root;
 		} catch (JDOMException | IOException e) {
-			throw new YumException("xml read failed", e);
+			throw new YumException(e);
 		}
 	}
 	

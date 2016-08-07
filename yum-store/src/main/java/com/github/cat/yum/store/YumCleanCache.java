@@ -49,7 +49,7 @@ public class YumCleanCache {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp("search rpmName", options, true);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " cleanCache [options] rpmName", options);
 	}
 	
 	public static void clean(File storeXml) {
@@ -60,7 +60,7 @@ public class YumCleanCache {
 			log.info("clean sucess.");
 		} catch (IOException e) {
 			log.info("clean fail.");
-			throw new YumException("clean cache fail ", e);
+			throw new YumException(e);
 		}
 	}
 }

@@ -28,6 +28,8 @@ public class HttpUtils {
 		
 		log.info("download file :" + url);
 		
+		//throw new IOException("test");
+		
 		HttpClient client = HttpClients.createDefault();
         HttpGet httpget = new HttpGet(url);  
         httpget.setHeader("Connection", "close");

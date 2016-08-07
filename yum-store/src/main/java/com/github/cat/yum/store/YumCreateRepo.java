@@ -45,7 +45,7 @@ public class YumCreateRepo {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp("createRepo targetDir", options, true);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " createRepo [options] targetDir", options);
 	}
 	
 
@@ -63,14 +63,14 @@ public class YumCreateRepo {
 			FileUtils.forceDeleteOnExit(repoDataDir);
 			FileUtils.forceMkdir(repoDataDir);
 		} catch (IOException e) {
-			throw new YumException(repoDataDir + " delete or create fail ", e);
+			throw new YumException(e);
 		}
 		if(repoDataDir.exists()){
 			try {
 				FileUtils.deleteDirectory(repoDataDir);
 				FileUtils.forceMkdir(repoDataDir);
 			} catch (IOException e) {
-				throw new YumException(repoDataDir + " delete or create fail ", e);
+				throw new YumException(e);
 			}
 		}
 	    try {
@@ -79,7 +79,7 @@ public class YumCreateRepo {
 			log.info("init repodata success.");
 		} catch (NoSuchAlgorithmException | IOException e) {
 			log.info("init repodata error.");
-			throw new YumException("create repodata error", e);
+			throw new YumException(e);
 		}
 	}
 }
