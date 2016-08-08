@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.Test;
 import com.github.cat.yum.store.base.RpmScan;
@@ -18,7 +19,7 @@ public class Main {
 	
 	@Test
 	public void testSearch(){
-		Launcher.main(new String[]{"download","-a", "x86-64", "-v", "6.0", "unzip"});
+		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "unzip"});
 	}
 	
 	@Test
@@ -33,7 +34,7 @@ public class Main {
 	
 	@Test
 	public void testHelp() {
-		Launcher.main(new String[]{"search", "-help"});
+		Launcher.main(new String[]{"retrive", "-help"});
 	}
 	
 	@Test
@@ -46,10 +47,10 @@ public class Main {
 	}
 	
 	
-	@Test
-	public void yumsearch() {
-		YumDownload.search(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
-	}
+//	@Test
+//	public void yumsearch() {
+//		YumRetrive.(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
+//	}
 	
 	@Test
 	public void yumclean() {
@@ -92,5 +93,23 @@ public class Main {
 	@Test
 	public void test3(){
 		System.out.println(Pattern.matches("^rpmlib\\(.*", "rpmlib(CompressedFileNames)"));
+	}
+	
+	@Test
+	public void test4(){
+		System.out.println(getHost("https://127.0.0.1/aaa"));
+	}
+	
+	public static String getHost(String url){
+		  if(url==null||url.trim().equals("")){
+		   return "";
+		  }
+		  String host = "";
+		  Pattern p =  Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+");
+		  Matcher matcher = p.matcher(url);  
+		  if(matcher.find()){
+		   host = matcher.group();  
+		  }
+		  return host;
 	}
 }

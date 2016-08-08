@@ -2,9 +2,14 @@ package com.github.cat.yum.store.model;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.lang.StringUtils;
+
 import com.github.cat.yum.store.base.YumStore;
+import com.github.cat.yum.store.sqlite.DataSourcePool;
 import com.github.cat.yum.store.sqlite.SqlUtils;
 
 public class SearchResult {
@@ -21,14 +26,15 @@ public class SearchResult {
 	}
 	
 	//rpm null,表示过滤,但提供provides和files
-	public List<Entry> addRpm(String packagekey, java.io.File rpm){
-		provides.addAll(SqlUtils.selectList("select * from provides where packagekey=?", new BeanListHandler<>(Entry.class), packagekey));
-		files.addAll(SqlUtils.selectList("select * from files where packagekey=?", new BeanListHandler<>(File.class), packagekey));
+	public List<Entry> addRpm(Store store, String packagekey, java.io.File rpm){
+		DataSource ds = DataSourcePool.getPool(store);
+		provides.addAll(SqlUtils.selectList(ds, "select * from provides where packagekey=?", new BeanListHandler<>(Entry.class), packagekey));
+		files.addAll(SqlUtils.selectList(ds, "select * from files where packagekey=?", new BeanListHandler<>(File.class), packagekey));
 		if(null == rpm){
 			return new ArrayList<>();
 		}
 		rpms.add(rpm);
-		return SqlUtils.selectList("select * from requires where packagekey=?", new BeanListHandler<>(Entry.class), packagekey);
+		return SqlUtils.selectList(ds, "select * from requires where packagekey=?", new BeanListHandler<>(Entry.class), packagekey);
 	}
 
 

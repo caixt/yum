@@ -14,7 +14,7 @@ public class Launcher {
 	public static void main(String[] args) {
 		Options options = new Options();
 		options.addOption(null, "clean", false, "clean all cache");
-		options.addOption(null, "download", false, "search rpm and download");
+		options.addOption(null, "retrive", false, "search rpm and download");
 		options.addOption(null, "repo", false, "create repodata for yum store");
         
 		if(args.length == 0){
@@ -28,8 +28,8 @@ public class Launcher {
 					YumCleanCache.main(args);
 					break;
 				}
-				case "download" :{
-					YumDownload.main(args);
+				case "retrive" :{
+					YumRetrive.main(args);
 					break;
 				}
 				case "repo" :{

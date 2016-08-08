@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <yum-stores catchdir="cache">
-	<store key="aliyun.com">http://mirrors.aliyun.com/centos/7/os/x86_64</store>
-	<store key="163.com">http://mirrors.163.com/centos/7/os/x86_64</store>
-	<store key="nwsuaf.edu.cn">http://mirrors.nwsuaf.edu.cn/centos/7/os/x86_64</store>
+	<store>http://mirrors.aliyun.com/{os}/{releasever}/os/{basearch}</store>
+	<store>http://mirrors.163.com/{os}/{releasever}/os/{basearch}</store>
+	<store>http://mirrors.nwsuaf.edu.cn/{os}/{releasever}/os/{basearch}</store>
 	<filter>bash</filter>
 </yum-stores>

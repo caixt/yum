@@ -20,6 +20,8 @@ public class PackageRpmMetadata extends RpmMetadata {
 	
 	public PackageRpmMetadata(Element packageElement){
 		name = packageElement.getChild("name", COMMONNAMESPACE).getText();
+		version = packageElement.getChild("version", COMMONNAMESPACE).getText();
+		architecture = packageElement.getChild("arch", COMMONNAMESPACE).getText();
 		Element checksum = packageElement.getChild("checksum", COMMONNAMESPACE);
 		this.algorithm = checksum.getAttributeValue("type");
 		this.checkSum = checksum.getText();

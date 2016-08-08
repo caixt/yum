@@ -15,14 +15,14 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
+import com.github.cat.yum.store.base.Basearch;
 import com.github.cat.yum.store.base.YumException;
 import com.github.cat.yum.store.base.YumStore;
-import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.SearchResult;
 import com.github.cat.yum.store.sqlite.SqlUtils;
 
-public class YumDownload {
-	private static Logger log = LoggerFactory.getLogger(YumDownload.class);
+public class YumRetrive {
+	private static Logger log = LoggerFactory.getLogger(YumRetrive.class);
 	
 	
 	public static void main(String[] args) {
@@ -45,28 +45,25 @@ public class YumDownload {
                 .desc("search rpm version")
                 .build());
 		
-		options.addOption(Option.builder("a").longOpt("arch")
-                .hasArg()
-                .desc("search rpm arch [noarch|i686|x86-64]")
-                .build());
-		
 		try {
 		    CommandLine line = parser.parse( options, args );
 		    List<String> arglist = line.getArgList();
-		    if(line.hasOption(Launcher.HELP_OPTION.getOpt()) || arglist.size() < 2){
+		    if(line.hasOption(Launcher.HELP_OPTION.getOpt()) || arglist.size() < 5){
 		    	printHelp(options);
 		    	return ;
 		    }
-		    String rpmName = arglist.get(1);
+		    String os = arglist.get(1);
+		    String releasever = arglist.get(2);
+		    Basearch basearch = Basearch.valueOf(arglist.get(3));
+		    String rpmName = arglist.get(4);
 		    String version = line.getOptionValue("version");
-		    String arch = line.getOptionValue("arch");
 		    File storeXml = new File(line.getOptionValue("config", "conf/yum-store.xml"));
 		    String output = line.getOptionValue("output");
 		    File outputFile = null;
 		    if(!StringUtils.isBlank(output)){
 		    	outputFile = new File(output);
 		    }
-		    search(storeXml, rpmName, version, arch, outputFile);
+		    search(storeXml, os, releasever, basearch, rpmName, version, outputFile);
 		}
 		catch( ParseException exp ) {
 			printHelp(options);
@@ -77,26 +74,17 @@ public class YumDownload {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp(Launcher.CALLCOMMAND + " search [options] rpmName", options);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " retrive [options] os releasever basearch rpmName", 
+	    		"example: " + Launcher.CALLCOMMAND + " retrive centos 7 x86_64 unzip"  , options , "");
 	}
 	
 	
-	public static void search(File storeXml, String rpmName, String version, String arch, File output) {
+	public static void search(File storeXml, String os, String releasever, Basearch basearch, String rpmName, String version, File output) {
 		YumStore yumStore = new YumStore(storeXml);
-		yumStore.init();
+		yumStore.init(os, releasever, basearch);
 		
-		Entry search = new Entry();
-		search.name = rpmName;
-		if(!StringUtils.isBlank(version)){
-			search.flags = "EQ";
-			search.release = version;
-		}
-		
-		if(!StringUtils.isBlank(arch) && !"noarch".equals(arch)){
-			search.name += "(" + arch + ")";
-		}
 		log.info("search start");
-		SearchResult searchResult = yumStore.searchAndDownload(search);
+		SearchResult result = yumStore.retrive(rpmName, version, basearch);
 		log.info("search success");
 		log.info("zip start");
 		if(null == output){
@@ -111,14 +99,14 @@ public class YumDownload {
 			if(!output.exists()){
 				FileUtils.forceMkdir(output);
 			}
-			for(File rpm : searchResult.rpms){
+			for(File rpm : result.rpms){
 				FileUtils.copyFileToDirectory(rpm, output);
 			}
 		}catch(IOException e){
 			throw new YumException(e);
 		}
 		File outputZip = new File(output.getAbsolutePath() + File.separator + SqlUtils.getUUId() + ".zip");
-		ZipUtil.packEntries(searchResult.rpms.toArray(new File[]{}) , outputZip);
+		ZipUtil.packEntries(result.rpms.toArray(new File[]{}) , outputZip);
 		log.info("zip success");
 		log.info("result zip file path:" + outputZip);
 	}
