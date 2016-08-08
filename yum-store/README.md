@@ -30,6 +30,7 @@ ${path}为解压后的目录
 
 ###安装yum源
 在服务器提供yum源配置/etc/yum.repos.d/
+
 	[myyumrepo]
 	name=DockerRepository
 	baseurl=https://#{sercer}/centos/7/os/x86_64
