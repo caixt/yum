@@ -13,31 +13,37 @@ public class Launcher {
 	
 	public static void main(String[] args) {
 		Options options = new Options();
-		options.addOption(null, "cleanCache", false, "clean all cache");
-		options.addOption(null, "search", false, "search rpm and download");
-		options.addOption(null, "createRepo", false, "create repo for yum store");
+		options.addOption(null, "clean", false, "clean all cache");
+		options.addOption(null, "download", false, "search rpm and download");
+		options.addOption(null, "repo", false, "create repodata for yum store");
         
 		if(args.length == 0){
 			printHelp(options);
 			return ;
 		}
 		String command = args[0];
-		Option option = options.getOption("--" + command);
-		if (option == null) {
-			printHelp(options);
-			return ;
-		}		
-		
-		String className = Launcher.class.getPackage().getName() + ".Yum" + 
-				command.substring(0, 1).toUpperCase() + command.substring(1);
-		
-		try {
-			Class.forName(className).getMethod("main", String[].class).invoke(null, (Object)args);
-		} catch (Exception e) {
+		try{
+			switch (command) {
+				case "clean" :{
+					YumCleanCache.main(args);
+					break;
+				}
+				case "download" :{
+					YumDownload.main(args);
+					break;
+				}
+				case "repo" :{
+					YumCreateRepo.main(args);
+					break;
+				}
+				default:
+					printHelp(options);
+					break;
+			}
+		}catch (RuntimeException e) {
 			System.out.println(e.getMessage());
 			System.exit(1);
 		}  
-
 	}
 	
 	

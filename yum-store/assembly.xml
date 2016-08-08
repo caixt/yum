@@ -1,4 +1,3 @@
-
 <assembly
 	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -21,10 +20,16 @@
 			<directory>conf</directory>
 			<useDefaultExcludes>true</useDefaultExcludes>
 		</fileSet>
+		<fileSet>
+			<directory>lib</directory>
+			<useDefaultExcludes>true</useDefaultExcludes>
+		</fileSet>
 	</fileSets>
+	<!-- 排除依赖的也会打包进来，解决不了
 	<dependencySets>  
 		<dependencySet>
 			<outputDirectory>lib</outputDirectory>
 		</dependencySet>
 	</dependencySets>
+	-->
 </assembly>

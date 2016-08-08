@@ -18,8 +18,7 @@ public class Main {
 	
 	@Test
 	public void testSearch(){
-		Launcher.main(new String[]{"search", "unzip"});
-		//Launcher.main(new String[]{"search","-a", "x86-64", "-v", "6.0", "unzip"});
+		Launcher.main(new String[]{"download","-a", "x86-64", "-v", "6.0", "unzip"});
 	}
 	
 	@Test
@@ -34,7 +33,7 @@ public class Main {
 	
 	@Test
 	public void testHelp() {
-		Launcher.main(new String[]{"createRepo", "-help"});
+		Launcher.main(new String[]{"search", "-help"});
 	}
 	
 	@Test
@@ -49,7 +48,7 @@ public class Main {
 	
 	@Test
 	public void yumsearch() {
-		YumSearch.search(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
+		YumDownload.search(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
 	}
 	
 	@Test
