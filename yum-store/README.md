@@ -1,6 +1,6 @@
 # yum 源码
 
-## 运行效果(已下载unzip命令为例)
+## 运行效果(以提供unzip源命令为例)
 
 ###解压
 cd 到解压后的bin目录
@@ -14,12 +14,12 @@ cd 到解压后的bin目录
 	yumtool repo centos/7/os/x86_64
 
 ### 配置nginx
-location / {
-	root  ${path}
-	autoindex on;
-	autoindex_exact_size on;
-	autoindex_localtime on;
-}
+	location / {
+		root  ${path}
+		autoindex on;
+		autoindex_exact_size on;
+		autoindex_localtime on;
+	}
 ${path}为解压后的目录
 
 
@@ -30,10 +30,10 @@ ${path}为解压后的目录
 
 ###安装yum源
 在服务器提供yum源配置/etc/yum.repos.d/
-[myyumrepo]
-name=DockerRepository
-baseurl=https://#{sercer}/centos/7/os/x86_64
-enabled=1
-gpgcheck=0
+	[myyumrepo]
+	name=DockerRepository
+	baseurl=https://#{sercer}/centos/7/os/x86_64
+	enabled=1
+	gpgcheck=0
 
 > 服务器上可能有很多yum源被使用，可以在命令中添加 --disablerepo=\* --enablerepo=myyumrepo
