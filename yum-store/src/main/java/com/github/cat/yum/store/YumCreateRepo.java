@@ -45,7 +45,7 @@ public class YumCreateRepo {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp(Launcher.CALLCOMMAND + " createRepo [options] targetDir", options);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " repo [options] targetDir", options);
 	}
 	
 

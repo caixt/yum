@@ -14,12 +14,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.zip.ZipUtil;
 import com.github.cat.yum.store.base.Basearch;
 import com.github.cat.yum.store.base.YumException;
 import com.github.cat.yum.store.base.YumStore;
 import com.github.cat.yum.store.model.SearchResult;
-import com.github.cat.yum.store.sqlite.SqlUtils;
 
 public class YumRetrive {
 	private static Logger log = LoggerFactory.getLogger(YumRetrive.class);
@@ -54,7 +52,12 @@ public class YumRetrive {
 		    }
 		    String os = arglist.get(1);
 		    String releasever = arglist.get(2);
-		    Basearch basearch = Basearch.valueOf(arglist.get(3));
+		    Basearch basearch = null;
+		    try{
+		    	basearch = Basearch.valueOf(arglist.get(3));
+		    }catch(IllegalArgumentException e){
+				throw new YumException("basearch : [i386|x86_64] not be " + arglist.get(3));
+			}
 		    String rpmName = arglist.get(4);
 		    String version = line.getOptionValue("version");
 		    File storeXml = new File(line.getOptionValue("config", "conf/yum-store.xml"));
@@ -86,7 +89,7 @@ public class YumRetrive {
 		log.info("search start");
 		SearchResult result = yumStore.retrive(rpmName, version, basearch);
 		log.info("search success");
-		log.info("zip start");
+		log.info("output start");
 		if(null == output){
 			if(YumStore.cachedir.exists()){
 				output = YumStore.cachedir.getAbsoluteFile();
@@ -95,6 +98,7 @@ public class YumRetrive {
 				output = new File("").getAbsoluteFile();
 			}
 		}
+		//output = new File(output.getAbsolutePath() + File.separator + os + File.separator + releasever + File.separator + basearch);
 		try{
 			if(!output.exists()){
 				FileUtils.forceMkdir(output);
@@ -105,9 +109,11 @@ public class YumRetrive {
 		}catch(IOException e){
 			throw new YumException(e);
 		}
-		File outputZip = new File(output.getAbsolutePath() + File.separator + SqlUtils.getUUId() + ".zip");
-		ZipUtil.packEntries(result.rpms.toArray(new File[]{}) , outputZip);
-		log.info("zip success");
-		log.info("result zip file path:" + outputZip);
+		log.info("output success");
+		log.info("output dir:" + output);
+//		File outputZip = new File(output.getAbsolutePath() + File.separator + SqlUtils.getUUId() + ".zip");
+//		ZipUtil.packEntries(result.rpms.toArray(new File[]{}) , outputZip);
+//		log.info("zip success");
+//		log.info("result zip file path:" + outputZip);
 	}
 }

@@ -20,7 +20,7 @@ public class PackageRpmMetadata extends RpmMetadata {
 	
 	public PackageRpmMetadata(Element packageElement){
 		name = packageElement.getChild("name", COMMONNAMESPACE).getText();
-		version = packageElement.getChild("version", COMMONNAMESPACE).getText();
+		version = packageElement.getChild("version", COMMONNAMESPACE).getAttributeValue("ver").trim();
 		architecture = packageElement.getChild("arch", COMMONNAMESPACE).getText();
 		Element checksum = packageElement.getChild("checksum", COMMONNAMESPACE);
 		this.algorithm = checksum.getAttributeValue("type");
@@ -29,7 +29,12 @@ public class PackageRpmMetadata extends RpmMetadata {
 		this.require = new ArrayList<>();
 		Element format = packageElement.getChild("format", COMMONNAMESPACE);
 		Element provides = format.getChild("provides", RPMNAMESPACE);
-		this.provide = initEntry(provides.getChildren());
+		if(null != provides){
+			this.provide = initEntry(provides.getChildren());
+		}
+		else{
+			this.provide = new ArrayList<>();
+		}
 		Element requires = format.getChild("requires", RPMNAMESPACE);
 		if(requires != null){
 			this.require = initEntry(requires.getChildren());

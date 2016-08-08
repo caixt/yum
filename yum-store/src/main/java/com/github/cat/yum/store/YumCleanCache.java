@@ -49,7 +49,7 @@ public class YumCleanCache {
 	
 	public static void printHelp(Options options){
 		HelpFormatter formatter = new HelpFormatter();
-	    formatter.printHelp(Launcher.CALLCOMMAND + " cleanCache [options] rpmName", options);
+	    formatter.printHelp(Launcher.CALLCOMMAND + " clean [options]", options);
 	}
 	
 	public static void clean(File storeXml) {

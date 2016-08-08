@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<yum-stores catchdir="cache">
+	<!-- 阿里云镜像-->
+	<store>http://mirrors.aliyun.com/{os}/{releasever}/os/{basearch}</store>
+	<!-- nginx镜像 -->
+	<store>http://nginx.org/packages/{os}/{releasever}/{basearch}</store> 
+	<!-- docker镜像 -->
+	<store basearch="x86_64">https://yum.dockerproject.org/repo/main/{os}/{releasever}</store>
+</yum-stores>

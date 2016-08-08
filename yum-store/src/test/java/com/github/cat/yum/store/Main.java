@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.Test;
 import com.github.cat.yum.store.base.RpmScan;
@@ -19,17 +18,17 @@ public class Main {
 	
 	@Test
 	public void testSearch(){
-		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "unzip"});
+		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "nginx", "-c", "conf/yum-store.custom.xml", "-v", "1.10.1"});
 	}
 	
 	@Test
 	public void testCleanCache(){
-		Launcher.main(new String[]{"cleanCache", "-c", "conf/yum-store.xml"});
+		Launcher.main(new String[]{"clean", "-c", "conf/yum-store.xml"});
 	}
 	
 	@Test
 	public void testCreateRepo() {
-		Launcher.main(new String[]{"createRepo", "yum-store"});
+		Launcher.main(new String[]{"repo", "yum-store"});
 	}
 	
 	@Test
@@ -47,19 +46,8 @@ public class Main {
 	}
 	
 	
-//	@Test
-//	public void yumsearch() {
-//		YumRetrive.(new File("conf/yum-store.xml"), "unzip","6.0","x86-64", null);
-//	}
-	
 	@Test
-	public void yumclean() {
-		YumCleanCache.clean(new File("conf/yum-store.xml"));
-	}
-	
-	
-	@Test
-	public void test2(){
+	public void testVersion(){
 		System.out.println(VersionStringUtils.compare("1.12.1", "1.9.10"));
 		System.out.println(VersionStringUtils.compare("1.12.10A", "1.12.8A"));
 		System.out.println(VersionStringUtils.compare("1.8.1", "1.10A"));
@@ -69,7 +57,7 @@ public class Main {
 		
 		List<Entry> list = new ArrayList<Entry>();
 		Entry e = new Entry();
-		e.version = "1.8.1";
+		e.version = "1.10.0";
 		list.add(e);
 		e = new Entry();
 		e.version = "1.10.1";
@@ -93,23 +81,8 @@ public class Main {
 	@Test
 	public void test3(){
 		System.out.println(Pattern.matches("^rpmlib\\(.*", "rpmlib(CompressedFileNames)"));
+		
+		System.out.println(VersionStringUtils.compare("1.10.0", "1.10.1"));
 	}
 	
-	@Test
-	public void test4(){
-		System.out.println(getHost("https://127.0.0.1/aaa"));
-	}
-	
-	public static String getHost(String url){
-		  if(url==null||url.trim().equals("")){
-		   return "";
-		  }
-		  String host = "";
-		  Pattern p =  Pattern.compile("(?<=//|)((\\w)+\\.)+\\w+");
-		  Matcher matcher = p.matcher(url);  
-		  if(matcher.find()){
-		   host = matcher.group();  
-		  }
-		  return host;
-	}
 }

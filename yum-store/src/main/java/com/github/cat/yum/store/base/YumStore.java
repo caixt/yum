@@ -6,15 +6,11 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.sql.DataSource;
-
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.io.FileUtils;
@@ -26,7 +22,6 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import com.github.cat.yum.store.model.Entry;
 import com.github.cat.yum.store.model.PackageRpmMetadata;
 import com.github.cat.yum.store.model.SearchResult;
@@ -76,7 +71,11 @@ public class YumStore {
 			}
 			String basearch = element.getAttributeValue("basearch");
 			if(!StringUtils.isBlank(basearch)){
-				store.basearch = Basearch.valueOf(basearch.trim());
+				try{
+					store.basearch = Basearch.valueOf(basearch.trim());
+				}catch(IllegalArgumentException e){
+					throw new YumException("basearch : [i386|x86_64] not be " + basearch.trim());
+				}
 			}
 			stores.add(store);
         }
@@ -88,11 +87,8 @@ public class YumStore {
         fileterRpmNames = filters.toArray(new String[]{});
 	}
 	
-	
-	
-
 	public void init(String os, String releasever, Basearch basearch){
-		List<Object> enableKeys = new ArrayList<>();
+		List<Object> enables = new ArrayList<>();
 		for(Store store : stores){
 			if(StringUtils.isBlank(store.os) && StringUtils.indexOf(store.baseUrl, "{os}") > 0){
 				store.os = os;
@@ -104,6 +100,12 @@ public class YumStore {
 				store.basearch = basearch;
 			}
 			
+			if(StringUtils.isBlank(store.os) || StringUtils.isBlank(store.releasever) || null == store.basearch){
+				log.warn("url:{}  disable.os:{},releasever:{},basearch{}");
+				continue;
+			}
+			
+			
 			store.baseUrl = StringUtils.replace(store.baseUrl, "{os}", store.os);
 			store.baseUrl = StringUtils.replace(store.baseUrl, "{releasever}", store.releasever);
 			store.baseUrl = StringUtils.replace(store.baseUrl, "{basearch}", store.basearch.toString());
@@ -112,18 +114,17 @@ public class YumStore {
 			int count = (int) SqlUtils.select(ds, "select count(*) icount from sqlite_master", new MapHandler()).get("icount");
 			if(count != 0){
 				store.enable = true;
-				enableKeys.add(store);
+				enables.add(store);
 				log.info("load store [" + store.baseUrl + "] from cache");  
 				continue ;
 			}
-			
-			SqlUtils.inintTables(ds);
 			
 			File dir = new File(cachedir.getPath() + File.separator + store.host);
 			if(!dir.exists()){
 				dir.mkdir();
 			}
-			File repomdXml = new File(dir.getPath() + File.separator + "repomd" + ".xml");
+			File repomdXml = new File(dir.getPath() + File.separator + store.os + File.separator + store.releasever 
+					+ File.separator +  store.basearch + File.separator +"repomd" + ".xml");
 			
 			if(!repomdXml.exists()){
 				try{
@@ -136,7 +137,8 @@ public class YumStore {
 				log.info("store " + store.baseUrl + " disable");
 				continue;
 			}
-			File privateXml = new File(dir.getPath() + File.separator + "private" + ".xml");
+			File privateXml = new File(dir.getPath() + File.separator + store.os + File.separator + store.releasever 
+					+ File.separator +  store.basearch + File.separator + "private" + ".xml");
 			if(!privateXml.exists()){
 				try{
 					privateXml = downloadPrivateXml(store, dir, repomdXml);
@@ -151,13 +153,14 @@ public class YumStore {
 					continue;
 				}
 			}
-			store.enable = true;
-			enableKeys.add(store);
+			SqlUtils.inintTables(ds);
 			loadProvateXmlData(store, ds, privateXml);
+			store.enable = true;
+			enables.add(store);
 			log.info("store " + store.baseUrl + " enable");
 		}
 		
-		if(enableKeys.size() == 0){
+		if(enables.size() == 0){
 			throw new YumException("no store enable");
 		}
 	}
@@ -360,8 +363,7 @@ public class YumStore {
 				if(!StringUtils.isBlank(version)){
 					Map<String, Object> data = SqlUtils.select(ds, "select * from package where name=? and version=? and arch=?", new MapHandler(), rpmName, version, basearch.getArch());
 					if(data == null){
-						basearch = Basearch.no;
-						data = SqlUtils.select(ds, "select * from package where name=? and version=? and arch=?", new MapHandler(), rpmName, version, basearch.getArch());
+						data = SqlUtils.select(ds, "select * from package where name=? and version=? and arch=?", new MapHandler(), rpmName, version,  Basearch.no.getArch());
 					}
 					if(data != null){
 						return downloadRpmAddResult((String)data.get("key"), store, result);
@@ -370,8 +372,7 @@ public class YumStore {
 				else{
 					Map<String, Object> data = SqlUtils.select(ds, "select * from package where name=? and arch=?", new MapHandler(), rpmName, basearch.getArch());
 					if(data == null){
-						basearch = Basearch.no;
-						data = SqlUtils.select(ds, "select * from package where name=? and arch=?", new MapHandler(), rpmName, basearch.getArch());
+						data = SqlUtils.select(ds, "select * from package where name=? and arch=?", new MapHandler(), rpmName, Basearch.no.getArch());
 					}
 					if(data != null){
 						return downloadRpmAddResult((String)data.get("key"), store, result);
@@ -400,13 +401,7 @@ public class YumStore {
 				DataSource ds = DataSourcePool.getPool(store);
 				//provides 中查找
 				List<Map<String, Object>> datas = SqlUtils.selectList(ds, "select * from provides where name=?", new MapListHandler(), search.name);
-				
-				Collections.sort(datas, new Comparator<Map<String, Object>>() {
-		            public int compare(Map<String, Object> e1, Map<String, Object> e2) {
-		                return -VersionStringUtils.compare((String) e1.get("version"), (String)e2.get("version"));
-		            }
-		        });
-				
+		
 				for(Map<String, Object> data : datas){
 					if(verificationEntry(search, (String) data.get("version"))){
 						try{
