@@ -110,6 +110,10 @@ public class YumStore {
 			store.baseUrl = StringUtils.replace(store.baseUrl, "{releasever}", store.releasever);
 			store.baseUrl = StringUtils.replace(store.baseUrl, "{basearch}", store.basearch.toString());
 			
+			
+			
+			
+			
 			DataSource ds = DataSourcePool.getPool(store);
 			int count = (int) SqlUtils.select(ds, "select count(*) icount from sqlite_master", new MapHandler()).get("icount");
 			if(count != 0){
@@ -119,12 +123,12 @@ public class YumStore {
 				continue ;
 			}
 			
-			File dir = new File(cachedir.getPath() + File.separator + store.host);
+			File dir = new File(cachedir.getPath() + File.separator + store.host + File.separator 
+					+ store.os + File.separator + store.releasever + File.separator +  store.basearch);
 			if(!dir.exists()){
 				dir.mkdir();
 			}
-			File repomdXml = new File(dir.getPath() + File.separator + store.os + File.separator + store.releasever 
-					+ File.separator +  store.basearch + File.separator +"repomd" + ".xml");
+			File repomdXml = new File(dir.getPath() + File.separator +"repomd" + ".xml");
 			
 			if(!repomdXml.exists()){
 				try{
@@ -137,8 +141,7 @@ public class YumStore {
 				log.info("store " + store.baseUrl + " disable");
 				continue;
 			}
-			File privateXml = new File(dir.getPath() + File.separator + store.os + File.separator + store.releasever 
-					+ File.separator +  store.basearch + File.separator + "private" + ".xml");
+			File privateXml = new File(dir.getPath() + File.separator + "private" + ".xml");
 			if(!privateXml.exists()){
 				try{
 					privateXml = downloadPrivateXml(store, dir, repomdXml);
@@ -271,7 +274,7 @@ public class YumStore {
 	private File downloadPrivateXml(Store store, File dir, File repomdXml) {
 		Element privateElement = getPrivateXmlPath(repomdXml);
 		String href = privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim();
-		File privateTepmXml = new File(dir.getPath() + File.separator + getFileNameFormHref(href));
+		File privateTepmXml = new File(dir.getAbsolutePath() + File.separator + getFileNameFormHref(href));
 		try {
 			HttpUtils.dowloadFile(store.baseUrl, privateElement.getChild("location", YumUtil.REPONAMESPACE).getAttributeValue("href").trim(), privateTepmXml);
 		} catch (IOException e) {
@@ -292,9 +295,9 @@ public class YumStore {
 		} catch (IOException e) {
 			throw new YumException(e);
 		}
-		privateTepmXml = new File(dir.getPath() + File.separator + privateTepmXml.getName().substring(0, privateTepmXml.getName().indexOf(".gz")));
-		privateTepmXml.renameTo(new File(dir.getPath() + File.separator + "private" + ".xml"));
-		privateTepmXml = new File(dir.getPath() + File.separator + "private" + ".xml");
+		privateTepmXml = new File(dir.getAbsolutePath() + File.separator + privateTepmXml.getName().substring(0, privateTepmXml.getName().indexOf(".gz")));
+		privateTepmXml.renameTo(new File(dir.getAbsolutePath() + File.separator + "private" + ".xml"));
+		privateTepmXml = new File(dir.getAbsolutePath() + File.separator + "private" + ".xml");
 		check = privateElement.getChild("open-checksum", YumUtil.REPONAMESPACE);
 		try {
 			sum = HashFile.getsum(privateTepmXml, check.getAttributeValue("type"));

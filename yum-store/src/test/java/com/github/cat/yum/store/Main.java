@@ -17,9 +17,14 @@ import com.github.cat.yum.store.util.VersionStringUtils;
 public class Main {
 	
 	@Test
-	public void testSearch(){
-		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "nginx", "-c", "conf/yum-store.custom.xml", "-v", "1.10.1"});
+	public void testRetrive(){
+		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "unzip"});
 	}
+	
+//	@Test
+//	public void testretrive(){
+//		Launcher.main(new String[]{"retrive", "centos", "7", "x86_64", "nginx", "-c", "conf/yum-store.custom.xml", "-v", "1.10.1"});
+//	}
 	
 	@Test
 	public void testCleanCache(){

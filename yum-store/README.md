@@ -17,8 +17,8 @@ cd 到解压后的bin目录
 	<store>http://nginx.org/packages/{os}/{releasever}/{basearch}</store> 
 	<!-- docker镜像 -->
 	<store basearch="x86_64">https://yum.dockerproject.org/repo/main/{os}/{releasever}</store>
-	yumtool retrive centos 7 x86_64 nginx -c, conf/yum-store.custom.xml -v 1.10.1
-	yumtool retrive centos 7 x86_64 docker-engine -c, conf/yum-store.custom.xml
+	yumtool retrive centos 7 x86_64 nginx -c conf/yum-store.custom.xml -v 1.10.1
+	yumtool retrive centos 7 x86_64 docker-engine -c conf/yum-store.custom.xml
 
 ###生成repo索引文件
 	yumtool repo source/centos/7/x86_64
