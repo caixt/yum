@@ -80,7 +80,7 @@ public class PackageRpmMetadata extends RpmMetadata {
 			}
 			String rel = entryElement.getAttributeValue("rel");
 			if(!StringUtils.isBlank(rel)){
-				entry.version = rel;
+				entry.release = rel;
 			}
 			String pre = entryElement.getAttributeValue("pre");
 			if(!StringUtils.isBlank(pre)){

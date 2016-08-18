@@ -4,5 +4,4 @@
 	<store>http://mirrors.aliyun.com/{os}/{releasever}/os/{basearch}</store>
 	<store>http://mirrors.163.com/{os}/{releasever}/os/{basearch}</store>
 	<store>http://mirrors.nwsuaf.edu.cn/{os}/{releasever}/os/{basearch}</store>
-	<filter>bash</filter>
 </yum-stores>

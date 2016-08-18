@@ -14,7 +14,6 @@ import javax.sql.DataSource;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -39,7 +38,6 @@ public class YumStore {
 	
 	public static File cachedir = new File("cache");
 	private List<Store> stores;
-	private String[] fileterRpmNames;
 	
 
 	public YumStore(File xml){
@@ -79,12 +77,6 @@ public class YumStore {
 			}
 			stores.add(store);
         }
-        List<String> filters = new ArrayList<>();
-        elements = root.getChildren("filter");
-        for(Element element : elements){
-        	filters.add(element.getTextTrim());
-        }
-        fileterRpmNames = filters.toArray(new String[]{});
 	}
 	
 	public void init(String os, String releasever, Basearch basearch){
@@ -100,7 +92,9 @@ public class YumStore {
 				store.basearch = basearch;
 			}
 			
-			if(StringUtils.isBlank(store.os) || StringUtils.isBlank(store.releasever) || null == store.basearch){
+			if(StringUtils.isBlank(store.os) || !StringUtils.equals(store.os, os) 
+					|| StringUtils.isBlank(store.releasever) || !StringUtils.equals(store.releasever, releasever) 
+					|| null == store.basearch || store.basearch != basearch ){
 				log.warn("url:{}  disable.os:{},releasever:{},basearch{}");
 				continue;
 			}
@@ -245,11 +239,6 @@ public class YumStore {
 	private List<Entry> downloadRpmAddResult(String packagekey, Store store, SearchResult result){
 		DataSource ds = DataSourcePool.getPool(store);
 		Map<String, Object> rpm = SqlUtils.select(ds, "select * from package where key=?", new MapHandler(), packagekey);
-		String name = (String)rpm.get("name");
-		if(ArrayUtils.indexOf(fileterRpmNames, name) > -1){
-			log.info("skip rpm :" + name);
-			return result.addRpm(store, packagekey, null);
-		}
 		
 		String location = (String)rpm.get("location");
 		File target = new File(cachedir.getPath() + File.separator + store.host + File.separator 
@@ -440,7 +429,7 @@ public class YumStore {
 				}
 			}
 			if(!success){
-				throw new RuntimeException("not find " + search.name + " provide");
+				throw new RuntimeException("not find " + search + " provide");
 			}
 		}
 		if(nextSearch.size() > 0){
@@ -455,25 +444,36 @@ public class YumStore {
 		}
 		switch (require.flags) {
 			case "LE":
-				if(VersionStringUtils.compare(require.version, provideVersion) <= 0){
+				if(require.version.equals(provideVersion)) {
 					return true;
 				}
+				if(VersionStringUtils.compare(provideVersion, require.version) <= 0){
+					return true;
+				}
+				break;
 			case "GE":
-				if(VersionStringUtils.compare(require.version, provideVersion) >= 0){
+				if(require.version.equals(provideVersion)) {
 					return true;
 				}
+				if(VersionStringUtils.compare(provideVersion, require.version) >= 0){
+					return true;
+				}
+				break;
 			case "EQ":
-				if(VersionStringUtils.compare(require.version, provideVersion) == 0){
+				if(require.version.equals(provideVersion)) {
 					return true;
 				}
+				break;
 			case "LT":
-				if(VersionStringUtils.compare(require.version, provideVersion) < 0){
+				if(VersionStringUtils.compare(provideVersion, require.version) < 0){
 					return true;
 				}
+				break;
 			case "GT":
-				if(VersionStringUtils.compare(require.version, provideVersion) > 0){
+				if(VersionStringUtils.compare(provideVersion, require.version) > 0){
 					return true;
 				}
+				break;
 			default:
 				break;
 		}
