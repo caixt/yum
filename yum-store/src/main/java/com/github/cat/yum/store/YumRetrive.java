@@ -82,12 +82,24 @@ public class YumRetrive {
 	}
 	
 	
-	public static void search(File storeXml, String os, String releasever, Basearch basearch, String rpmName, String version, File output) {
+	public static void search(File storeXml, String os, String releasever, Basearch basearch, String key, String version, File output) {
 		YumStore yumStore = new YumStore(storeXml);
 		yumStore.init(os, releasever, basearch);
-		
 		log.info("search start");
-		SearchResult result = yumStore.retrive(rpmName, version, basearch);
+		Basearch searchBasearch = basearch;
+		String rpmName =  key;
+		if(key.indexOf(".") > 0){
+			String str = rpmName.substring(key.lastIndexOf(".") + 1);
+			if(str.equals(Basearch.x86_64.getArch())){
+				searchBasearch = Basearch.x86_64;
+				rpmName = key.substring(0, key.lastIndexOf("."));
+			}
+			if(str.equals(Basearch.i386.getArch())){
+				searchBasearch = Basearch.i386;
+				rpmName = key.substring(0, key.lastIndexOf("."));
+			}
+		}
+		SearchResult result = yumStore.retrive(rpmName, version, searchBasearch);
 		log.info("search success");
 		log.info("output start");
 		if(null == output){

@@ -242,7 +242,8 @@ public class YumStore {
 		
 		String location = (String)rpm.get("location");
 		File target = new File(cachedir.getPath() + File.separator + store.host + File.separator 
-				+ store.os + File.separator + store.releasever + File.separator + rpm.get("location"));
+				+ store.os + File.separator + store.releasever + File.separator
+				+ store.basearch + File.separator + rpm.get("location"));
 		String algorithm = (String)rpm.get("algorithm");
 		String checkSum = (String)rpm.get("checkSum");
 		try{
